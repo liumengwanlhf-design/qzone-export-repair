@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>合成导出样例</title></head>
+<body>
+<div id="container">
+<div class="post">
+    <div class="avatar"><img src="https://a1.qpic.cn/avatar_fake1.jpg"></div>
+    <div class="nickname">示例用户tttttt示例用户</div>
+    <div class="time">2025年6月10日 16:01ttt</div>
+    <div class="message">这是第1条合成说说	内容含中文标点。ttt</div>
+    <img class="content-img" src="https://photo.store.qq.com/qzpic/DEAD_1.jpg">
+    <div class="comments">
+        <div class="comment">
+            <div class="nickname">评论者甲tttt</div>
+            <div class="time">2025年6月11日 08:00</div>
+            <div class="message">支持一下！</div>
+        </div>
+    </div>
+</div>
+
+<div class="post">
+    <div class="avatar"><img src="https://a1.qpic.cn/avatar_fake2.jpg"></div>
+    <div class="nickname">示例用户tttttt示例用户</div>
+    <div class="time">2025年6月10日 16:02ttt</div>
+    <div class="message">这是第2条合成说说	内容含中文标点。ttt</div>
+    <img class="content-img" src="https://photo.store.qq.com/qzpic/DEAD_2.jpg">
+    <div class="comments">
+        <div class="comment">
+            <div class="nickname">评论者甲tttt</div>
+            <div class="time">2025年6月11日 08:00</div>
+            <div class="message">支持一下！</div>
+        </div>
+    </div>
+</div>
+
+<div class="post">
+    <div class="avatar"><img src="https://a1.qpic.cn/avatar_fake3.jpg"></div>
+    <div class="nickname">示例用户tttttt示例用户</div>
+    <div class="time">2025年6月10日 16:03ttt</div>
+    <div class="message">这是第3条合成说说	内容含中文标点。ttt</div>
+    <img class="content-img" src="https://photo.store.qq.com/qzpic/DEAD_3.jpg">
+    <div class="comments">
+        <div class="comment">
+            <div class="nickname">评论者甲tttt</div>
+            <div class="time">2025年6月11日 08:00</div>
+            <div class="message">支持一下！</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 涓烘墍鏈夊浘鐗囨坊鍔犵偣鍑讳簨浠?
+var imgs = document.querySelectorAll(".content-img");
+imgs.forEach(function(img){
+    // 鎵撳紑鍥剧墖閾炬帴骞跺湪鏂版爣绛鹃〉涓睍绀?
+    img.addEventListener("click", function(){ window.open(img.src); });
+});
+</script>
+</body>
+</html>
