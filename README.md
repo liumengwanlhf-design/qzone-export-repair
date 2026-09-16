@@ -1,59 +1,59 @@
 # qzone-export-repair
 
-修复 **GetQzonehistory** 老版本（2025 年中之前发布的 exe）导出的 QQ 空间说说网页的独立小工具：
-清洗正文垃圾字符、把失效远程图片替换为本地文件、补齐坏掉的 HTML 结构。
+An offline, standard-library Python tool for repairing selected defects in legacy HTML exports from [GetQzonehistory](https://github.com/ll0v0ll/GetQzonehistory). It works on an existing export and its local `pic/` folder; it does not log in, make network requests, or fetch data from QQ.
 
-> 🎉 这些问题的**根因已在官方仓库修复**
-> （[Issue #20](https://github.com/ll0v0ll/GetQzonehistory/issues/20) /
-> [PR #21](https://github.com/ll0v0ll/GetQzonehistory/pull/21)）。
-> 本工具面向**存量旧导出文件**——已经躺在硬盘上的那些 HTML 无需重新登录抓取即可就地救活。
-> 新导出的请直接使用更新后的 GetQzonehistory。
+The underlying exporter fixes were merged upstream in [GetQzonehistory PR #21](https://github.com/ll0v0ll/GetQzonehistory/pull/21). This utility is for older exports already stored on disk.
 
-## 它修什么
+## 修复范围
 
-| 症状 | 根因 | 处理 |
-|---|---|---|
-| 昵称/时间/正文夹杂成片 `tttt...` | 老版本把消息里 `\t` 转义的反斜杠删除，残留字面量 `t` | 在 nickname/time/message 节点内清除 t 连串 |
-| 网页满屏裂图 | `<img src>` 指向已失效的 `*.qq.com` 远程图 | 替换为 `pic/` 下本地图；无本地图时换成"图片已失效"占位图，原链接保留在 `data-original-src` |
-| 页面样式塌陷 | 导出时缺失 `</div>`，DOM 嵌套错乱 | 按 `.post` 边界自动补齐闭合标签 |
-| 注释乱码 `涓烘墍鏈夊浘鐗?...` | 模板中文注释被 GBK 错误转码 | 还原为正常中文 |
+| 现象 | 脚本实际处理方式 |
+| --- | --- |
+| `nickname`、`time`、`message` 节点中出现连续的 `tttt...` | 清除这些指定节点中的长 `t` 串 |
+| 指向 `qq.com` 的失效图片 | 按导出内容和文件名关键词尝试引用同级 `pic/` 中的图片；找不到时写入占位图，并在 `data-original-src` 保留原 URL |
+| `<div>` 闭合不足 | 按 `.post` 边界补齐闭合标签；写入前检查 `<div>` 数量和说说数量 |
+| 四种已知的 GBK 误转码注释 | 替换为对应中文注释 |
 
-## 用法
+这不是通用 HTML 修复器。图片匹配依赖相邻约 800 个字符中的关键词和 GetQzonehistory 常见下载文件名；重复、纯图片或文字不具辨识度的内容可能无法正确匹配。
+
+## 使用方法
+
+需要 Python 3.8+，无需安装第三方包。以下命令用 `-X utf8` 启用 Python UTF-8 模式，避免 Windows 旧代码页无法显示状态符号；只更换终端并不能保证 Python 使用 UTF-8。
+
+先预演，确认输出：
 
 ```bash
-# 预演：只打印将要做的改动，不碰原文件
-python fix_qzone.py "你的_说说网页版.html"
-
-# 实际写回（校验通过才会写：<div> 平衡 且 说说数量不变）
-python fix_qzone.py "你的_说说网页版.html" --apply
-
-# 图片目录不在同级时显式指定
-python fix_qzone.py "你的_说说网页版.html" --pic "某文件夹/pic" --apply
+python -X utf8 fix_qzone.py "你的_说说网页版.html"
 ```
 
-仅依赖 Python 3.8+ 标准库，无需 pip install。
+确认后再写回。`--apply` 会覆盖输入 HTML；虽然脚本会检查 `<div>` 平衡和说说数量，仍建议先手动复制一份原文件。
 
-## 本地图片是怎么对上的？
+```bash
+python -X utf8 fix_qzone.py "你的_说说网页版.html" --apply
 
-无需任何配置。脚本启动时扫描 `pic/` 目录，按 GetQzonehistory 的下载命名约定
-（常见形如 `昵称__正文关键词[_时间戳].jpg`，也兼容纯正文式文件名）
-自动建立「正文关键词 → 本地文件」映射；渲染每张死链图片时，
-在其前文窗口内找**位置最靠后**的关键词命中（避免串到上一条说说），据此引用对应文件。
+# 图片目录不在 HTML 同级时
+python -X utf8 fix_qzone.py "你的_说说网页版.html" --pic "某文件夹/pic" --apply
+```
 
-多次上传同一图的重复文件（带时间戳后缀）会按顺序依次消费。
+默认图片目录为 HTML 同级的 `pic/`。输入文件必须是 UTF-8 编码。
 
-## 安全与隐私
+## 测试
 
-- 纯本地处理，不联网、不上传任何数据；
-- 仓库内的测试样例全部是**合成数据**（虚构用户名、假图片字节），不含任何真实导出内容；
-- 请勿将你自己的导出结果提交到公开仓库或贴到 Issue 里。
+仓库中的样例使用虚构用户名和假图片字节，不包含真实导出数据。可运行：
 
-## 已知限制
+```bash
+# PowerShell
+$env:PYTHONUTF8=1; python tests/test_fix_qzone.py
 
-- 远程头像（`a1.qpic.cn` 缩略图）若也失效，同样会被占位化——如果你有更好的本地对应策略欢迎 PR；
-- 关键词匹配依赖说书中至少一句可区分的文字（纯图无字的说说无法自动配图）；
-- 只处理 UTF-8 编码的导出文件。
+# POSIX shell
+PYTHONUTF8=1 python tests/test_fix_qzone.py
+```
+
+## 隐私
+
+- 所有处理都在本地完成；
+- 不要把个人导出文件、图片或登录数据提交到公开仓库或 Issue；
+- 本工具只处理已有文件，不能补回没有保存在本地的图片。
 
 ## License
 
-GPL-3.0（同上游 [ll0v0ll/GetQzonehistory](https://github.com/ll0v0ll/GetQzonehistory)）。
+GPL-3.0，沿用上游 [GetQzonehistory](https://github.com/ll0v0ll/GetQzonehistory) 的许可证。
